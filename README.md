@@ -31,7 +31,7 @@ Press `ctrl+q` to enter transcript mode. A `-- TRANSCRIPT --` line above the edi
 
 ### Neovim
 
-With `nvim` as `$VISUAL` or `$EDITOR`, the transcript opens in a terminal buffer (`nvim_open_term`) that renders pi's ANSI output as-is: the same syntax highlighting, diffs, and theme colors. No Neovim plugins or config changes are needed. The cursor starts at the line you were looking at in pi. Visual mode, yanking to `"+`, and search all work; the buffer is read-only.
+With `nvim` as `$VISUAL` or `$EDITOR`, pi's ANSI colors are converted to Neovim highlights in a regular scratch buffer, so you see the same syntax highlighting, diffs, and theme colors as in pi. No Neovim plugins or config changes are needed, and the buffer follows your usual settings and resizes like any other. The cursor starts at the line you were looking at in pi. Visual mode, yanking to `"+`, and search all work; the buffer is read-only.
 
 Other editors get plain text. `vim` and `nano` open at the current line.
 

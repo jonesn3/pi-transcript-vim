@@ -12,6 +12,7 @@ import {
 	type KeyId,
 	type TUI,
 } from "@earendil-works/pi-tui";
+import { ansiToHighlights } from "./ansi.ts";
 
 const TOGGLE_KEY: KeyId = "ctrl+q";
 
@@ -73,33 +74,44 @@ function transcriptLines(vp: TranscriptViewport): string[] | undefined {
 	return lines ? [...lines] : undefined;
 }
 
-function nvimViewerScript(ansiFile: string, line: number): string {
+function nvimViewerScript(dataFile: string, line: number): string {
 	return `
-local lines = vim.fn.readfile(${JSON.stringify(ansiFile)})
+local data = vim.json.decode(table.concat(vim.fn.readfile(${JSON.stringify(dataFile)}), "\\n"))
 local buf = vim.api.nvim_get_current_buf()
-local win = vim.api.nvim_get_current_win()
-for option, value in pairs({ number = false, relativenumber = false, signcolumn = "no", foldcolumn = "0", statuscolumn = "", list = false, spell = false }) do
-  vim.wo[win][option] = value
-end
-vim.bo[buf].scrollback = 100000
-local channel = vim.api.nvim_open_term(buf, {})
+vim.bo[buf].buftype = "nofile"
+vim.bo[buf].bufhidden = "wipe"
+vim.bo[buf].swapfile = false
 vim.api.nvim_buf_set_name(buf, "pi-transcript")
-vim.api.nvim_chan_send(channel, table.concat(lines, "\\r\\n"))
-vim.defer_fn(function()
-  vim.cmd("stopinsert")
-  vim.api.nvim_win_set_cursor(win, { math.min(${line}, vim.api.nvim_buf_line_count(buf)), 0 })
-  vim.cmd("normal! zt")
-end, 50)
+vim.api.nvim_buf_set_lines(buf, 0, -1, false, data.lines)
+local ns = vim.api.nvim_create_namespace("pi_transcript")
+for index, style in ipairs(data.groups) do
+  vim.api.nvim_set_hl(0, "PiTranscript" .. (index - 1), style)
+end
+for _, h in ipairs(data.highlights) do
+  local row, start_col, end_col, group, to_eol = h[1], h[2], h[3], h[4], h[5]
+  vim.api.nvim_buf_set_extmark(buf, ns, row, start_col, {
+    end_row = to_eol and row + 1 or row,
+    end_col = to_eol and 0 or end_col,
+    hl_group = "PiTranscript" .. group,
+    hl_eol = to_eol,
+    strict = false,
+  })
+end
+vim.bo[buf].modifiable = false
+vim.bo[buf].readonly = true
+vim.bo[buf].modified = false
+vim.api.nvim_win_set_cursor(0, { math.min(${line}, vim.api.nvim_buf_line_count(buf)), 0 })
+vim.cmd("normal! zt")
 `;
 }
 
 function prepareEditor(command: string, directory: string, lines: string[], line: number): string[] {
 	const name = basename(command);
 	if (name === "nvim") {
-		const ansiFile = join(directory, "transcript.ansi");
+		const dataFile = join(directory, "transcript.json");
 		const script = join(directory, "viewer.lua");
-		writeFileSync(ansiFile, `${lines.join("\n")}\n`, "utf-8");
-		writeFileSync(script, nvimViewerScript(ansiFile, line), "utf-8");
+		writeFileSync(dataFile, JSON.stringify(ansiToHighlights(lines)), "utf-8");
+		writeFileSync(script, nvimViewerScript(dataFile, line), "utf-8");
 		return ["-n", "-S", script];
 	}
 	const file = join(directory, "transcript.md");
