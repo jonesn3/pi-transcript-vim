@@ -1,0 +1,34 @@
+{
+  "name": "pi-transcript-vim",
+  "version": "0.1.0",
+  "description": "Vim-style navigation for pi's fullscreen transcript, with a one-key jump into Neovim that keeps pi's colors",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "vim",
+    "neovim",
+    "transcript",
+    "scroll"
+  ],
+  "files": [
+    "extensions",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/transcript-vim.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonesn3/pi-transcript-vim.git"
+  },
+  "homepage": "https://github.com/jonesn3/pi-transcript-vim#readme"
+}
